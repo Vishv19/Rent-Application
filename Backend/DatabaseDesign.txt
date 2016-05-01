@@ -1,0 +1,64 @@
+CREATE TABLE Users(
+    user_id INT NOT NULL AUTO_INCREMENT,
+    email_id VARCHAR( 20 ) NOT NULL ,
+    user_name VARCHAR(20 ) NOT NULL,
+    PRIMARY KEY ( user_id )
+)
+
+CREATE TABLE Place(
+    place_id INT NOT NULL AUTO_INCREMENT,
+    address_id INT NOT NULL,
+    place_name VARCHAR(20 ) NOT NULL,
+    rooms_count INT NOT NULL,
+    bathrooms_count INT NOT NULL,
+    area_squnit INT NOT NULL,
+    price INT NOT NULL,
+    phone_number VARCHAR(15)  NOT NULL,
+    email VARCHAR NOT NULL,
+    description VARCHAR NOT NULL,
+    page_visits_count INT NOT NULL,
+    occupied TINYINT(1),
+    PRIMARY KEY ( place_id ),
+    FORIGEN_KEY (address_id) REFERENCES Address.address_id,
+)
+
+CREATE TABLE UserPlace(
+    id INT NOT NULL AUTO_INCREMENT,
+    place_id INT NOT NULL,
+    landlord_id INT NOT NULL,
+    tenant_id INT NOT NULL,
+    FORIGEN_KEY (landlord_id) REFERENCES Users.user_id,
+    FORIGEN_KEY (place_id) REFERENCES Place.place_id,
+    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id,
+);
+
+CREATE TABLE Address(
+    address_id INT NOT NULL AUTO_INCREMENT,
+    street_level VARCHAR NOT NULL,
+    city_name VARCHAR NOT NULL,
+    state VARCHAR NOT NULL,
+    zip_code VARCHAR NOT NULL,
+    PRIMARY KEY ( address_id ),
+)
+
+CREATE TABLE Pictures(
+    pictures_id INT NOT NULL AUTO_INCREMENT,
+    image_url VARCHAR NOT NULL,
+    tenant_id INT NOT NULL,
+    PRIMARY KEY ( pictures_id ),
+    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id
+)
+
+CREATE TABLE Searches(
+    search_id INT NOT NULL AUTO_INCREMENT,
+    tenant_id INT NOT NULL,
+    keywords VARCHAR NOT NULL,
+    cityname VARCHAR NOT NULL,
+    zip_code VARCHAR NOT NULL,
+    property_type VARCHAR NOT NULL,
+    max_rental_price INT NOT NULL,
+    min_rental_price INT NOT NULL,
+    notification_freq ENUM("realtime", "daily", “weekly”) NOT NULL,
+    PRIMARY KEY ( search_id ),
+    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id,
+)
