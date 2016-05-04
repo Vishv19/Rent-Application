@@ -17,7 +17,7 @@ var landlordRouter = require('./routes/landlordRoutes')();
 var tenantRouter = require('./routes/tenantRoutes')();
 
 
-app.use('/api/user', userRouter);
+app.use('/api/users', userRouter);
 app.use('/api/landlord', landlordRouter);
 app.use('/api/tenant', tenantRouter);
 
