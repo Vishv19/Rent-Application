@@ -3,47 +3,75 @@
  */
 
 var express = require('express');
-var mysql = require('mysql');
-var connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'root',
-  database : 'rent'
-});
-connection.connect();
 
-var routes = function () {
+
+var routes = function (connection) {
 
     var userRouter = express.Router();
 
-
     userRouter.route('/signup').post(function (req, res) {
-        //should update the respective tables
-        // corresponding to landlord and user info
-        // since we are signing in with google credentials,
-        // we need to check for each request to server whether the
-        //user is signed in and get userid. SO each request should contain google id
+
+        //get name and email
         var name = req.body.name;
         var email = req.body.email;
-        var imageurl = req.body.imageurl;
-        var values = {user_name:name, email_id:email, image_url:imageurl};
 
-        var query = connection.query('INSERT INTO Users SET ?', values, function(err, result) {
-            if(err) return res.json(err);
-            else return res.json({"result":"true"});
+
+        //check whether user already exists or not
+        var query = connection.query('select count(*) as cnt from users where email_id = ?', [email], function (err, results) {
+
+            if (results[0].cnt === 0) {
+                //user does not exists create user
+                var values = {email_id: email, user_name: name};
+
+                var query = connection.query('INSERT INTO Users SET ?', values, function (err, results) {
+                    if (err)
+                        return res.json(err);
+                    else
+                        return res.json({"result": "true"});
+                });
+
+            } else {
+                return res.json({"result": "false"});
+            }
         });
+
 
     });
 
     userRouter.route('/login').post(function (req, res) {
-        //should verify the login credentials, whether the user is able to
-        //successfully login by google credentials
+        //login will take emailId and return result and json web token,
+        // for clarification see the file, which I shared.
+        // we should store the json web token in database.
+
+        //get email
+        var email = req.body.email;
+
+        //check if exists
+        var query = connection.query('select count(*) as cnt from users where email_id = ?', [email], function (err, results) {
+            if (results[0].cnt === 0) {
+                return res.json({"result": "false"});
+            } else {
+
+                //generate token, store in table.
+                // This will be used for every request sent from android app.
+                // also set a boolean variable which says that user is logged in.
+                return res.json({
+                    "result": "true",
+                    "token": "some random token"
+                });
+            }
+        });
     });
 
     userRouter.route('/logout').post(function (req, res) {
         //Since the user has logged out, we need to make sure
-        // we disable all the future api calls. We need to store a variable
-        // for each user in the database which specifies whether the user is logged in or not.
+        // we disable all the future api calls.
+        // set the boolean variable which says that user is logged in to false
+
+        //get email
+        var email = req.body.email;
+
+        return res.json({"result": "true"});
     });
 
 

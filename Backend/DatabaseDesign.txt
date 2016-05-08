@@ -2,6 +2,8 @@ CREATE TABLE Users(
     user_id INT NOT NULL AUTO_INCREMENT,
     email_id VARCHAR( 20 ) NOT NULL ,
     user_name VARCHAR(20 ) NOT NULL,
+    token VARCHAR(20 ) NOT NULL,
+    loggedIn BOOL NOT NULL,
     PRIMARY KEY ( user_id )
 )
 
@@ -24,12 +26,9 @@ CREATE TABLE Place(
 
 CREATE TABLE UserPlace(
     id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
     place_id INT NOT NULL,
-    landlord_id INT NOT NULL,
-    tenant_id INT NOT NULL,
-    FORIGEN_KEY (landlord_id) REFERENCES Users.user_id,
-    FORIGEN_KEY (place_id) REFERENCES Place.place_id,
-    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id,
+    FORIGEN_KEY (user_id) REFERENCES Users.user_id,
 );
 
 CREATE TABLE Address(
@@ -51,14 +50,23 @@ CREATE TABLE Pictures(
 
 CREATE TABLE Searches(
     search_id INT NOT NULL AUTO_INCREMENT,
-    tenant_id INT NOT NULL,
-    keywords VARCHAR NOT NULL,
+    user_id INT NOT NULL,
+    keywords VARCHAR NOT NULL, //needs to be an array
     cityname VARCHAR NOT NULL,
     zip_code VARCHAR NOT NULL,
     property_type VARCHAR NOT NULL,
     max_rental_price INT NOT NULL,
     min_rental_price INT NOT NULL,
     notification_freq ENUM("realtime", "daily", “weekly”) NOT NULL,
-    PRIMARY KEY ( search_id ),
-    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id,
+    PRIMARY KEY (search_id),
+    FORIGEN_KEY (user_id) REFERENCES Users.user_id
 )
+
+
+CREATE TABLE Favourites(
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    place_id INT NOT NULL,
+    FOREIGN_KEY (user_id) REFERENCES Users.user_id,
+    FOREIGN_KEY (place_id) REFERENCES Place.place_id
+);
