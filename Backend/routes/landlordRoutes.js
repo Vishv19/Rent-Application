@@ -218,7 +218,7 @@ var routes = function (connection) {
 
         //Here I have hardcoded the landlordToken, but it should be retrieved from header
 
-        var landlordToken = 1;
+        var landlordToken = req.get('token');
 
         var query = connection.query('select user_id from Users where token = ?', [landlordToken], function (err, results) {
 

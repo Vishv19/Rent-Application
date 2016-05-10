@@ -2,10 +2,10 @@ CREATE TABLE Users(
     user_id INT NOT NULL AUTO_INCREMENT,
     email_id VARCHAR( 20 ) NOT NULL ,
     user_name VARCHAR(20 ) NOT NULL,
-    token VARCHAR(20 ) NOT NULL,
+    token VARCHAR(150) NOT NULL,
     loggedIn BOOL NOT NULL,
     PRIMARY KEY ( user_id )
-)
+);
 
 CREATE TABLE Place(
     place_id INT NOT NULL AUTO_INCREMENT,
@@ -22,7 +22,7 @@ CREATE TABLE Place(
     occupied TINYINT(1),
     PRIMARY KEY ( place_id ),
     FOREIGN KEY (address_id) REFERENCES Address (address_id)
-)
+);
 
 CREATE TABLE UserPlace(
     id INT NOT NULL AUTO_INCREMENT,
@@ -39,7 +39,7 @@ CREATE TABLE Address(
     state VARCHAR(20) NOT NULL,
     zip_code VARCHAR(10) NOT NULL,
     PRIMARY KEY ( address_id )
-)
+);
 
 CREATE TABLE Pictures(
     pictures_id INT NOT NULL AUTO_INCREMENT,
@@ -47,7 +47,7 @@ CREATE TABLE Pictures(
     tenant_id INT NOT NULL,
     PRIMARY KEY ( pictures_id ),
     FOREIGN KEY (tenant_id) REFERENCES Users(user_id)
-)
+);
 
 CREATE TABLE Searches(
     search_id INT NOT NULL AUTO_INCREMENT,
@@ -61,7 +61,7 @@ CREATE TABLE Searches(
     notification_freq ENUM('realtime', 'daily', 'weekly'),
     PRIMARY KEY (search_id),
     FOREIGN KEY (user_id) REFERENCES Users (user_id)
-)
+);
 
 
 CREATE TABLE Favourites(

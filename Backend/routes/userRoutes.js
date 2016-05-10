@@ -3,6 +3,7 @@
  */
 
 var express = require('express');
+var jwt = require('jsonwebtoken');
 
 
 var routes = function (connection) {
@@ -56,9 +57,18 @@ var routes = function (connection) {
                 //generate token, store in table.
                 // This will be used for every request sent from android app.
                 // also set a boolean variable which says that user is logged in.
-                return res.json({
-                    "result": "true",
-                    "token": "some random token"
+                var token = jwt.sign({ username : email }, 'Rentz mobile App');
+                var query2 = connection.query('UPDATE Users SET token = ?,loggedIn = ? where email_id = ?'
+                    , [token, 1, email], function(err2, results2) {
+                    if(!err2) {
+                        return res.json({
+                            "result": "true",
+                            "token": token
+                        });
+                    }
+                    else {
+                        return res.json({"err": err2})
+                    }
                 });
             }
         });
@@ -72,7 +82,16 @@ var routes = function (connection) {
         //get email
         var email = req.body.email;
 
-        return res.json({"result": "true"});
+        var query = connection.query('UPDATE Users SET token = ?,loggedIn = ? where email_id = ?'
+            , ["null", 0, email], function(err, results) {
+                if(!err) {
+                    return res.json({"result": "true"});
+                }
+                else {
+                    return res.json({"err": err})
+                }
+        });
+
     });
 
 

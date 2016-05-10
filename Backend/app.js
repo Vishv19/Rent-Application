@@ -18,7 +18,7 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, token");
   next();
 });
-app.all(expressJWT({ secret: 'Rentz mobile App'}). unless({ path: ['/users/login']}));
+app.all(expressJWT({ secret: 'Rentz mobile App'}). unless({ path: ['api//users/login']}));
 
 //create sql connection
 var connection = mysql.createConnection({
