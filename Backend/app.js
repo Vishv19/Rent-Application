@@ -6,12 +6,19 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var mysql = require('mysql');
-
+var expressJWT = require('express-jwt');
 
 var port = 3000;
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, token");
+  next();
+});
+app.all(expressJWT({ secret: 'Rentz mobile App'}). unless({ path: ['/users/login']}));
 
 //create sql connection
 var connection = mysql.createConnection({
@@ -48,7 +55,7 @@ app.get('/', function (req, res) {
     res.json({"title":"RENT APP"});
 });
 
-app.listen(port, function () {
+app.listen(process.env.PORT || port, function () {
     console.log('Running on PORT: ' + port);
 });
 
