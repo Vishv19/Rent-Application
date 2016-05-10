@@ -17,8 +17,9 @@ var routes = function (connection) {
 
 
         //check whether user already exists or not
-        var query = connection.query('select count(*) as cnt from users where email_id = ?', [email], function (err, results) {
+        var query = connection.query('select count(*) as cnt from Users where email_id = ?', [email], function (err, results) {
 
+            if(err) console.log(err);
             if (results[0].cnt === 0) {
                 //user does not exists create user
                 var values = {email_id: email, user_name: name};
@@ -47,7 +48,7 @@ var routes = function (connection) {
         var email = req.body.email;
 
         //check if exists
-        var query = connection.query('select count(*) as cnt from users where email_id = ?', [email], function (err, results) {
+        var query = connection.query('select count(*) as cnt from Users where email_id = ?', [email], function (err, results) {
             if (results[0].cnt === 0) {
                 return res.json({"result": "false"});
             } else {

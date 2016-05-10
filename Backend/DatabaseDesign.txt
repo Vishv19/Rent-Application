@@ -16,50 +16,51 @@ CREATE TABLE Place(
     area_squnit INT NOT NULL,
     price INT NOT NULL,
     phone_number VARCHAR(15)  NOT NULL,
-    email VARCHAR NOT NULL,
-    description VARCHAR NOT NULL,
+    email VARCHAR(15) NOT NULL,
+    description VARCHAR(50) NOT NULL,
     page_visits_count INT NOT NULL,
     occupied TINYINT(1),
     PRIMARY KEY ( place_id ),
-    FORIGEN_KEY (address_id) REFERENCES Address.address_id,
+    FOREIGN KEY (address_id) REFERENCES Address (address_id)
 )
 
 CREATE TABLE UserPlace(
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     place_id INT NOT NULL,
-    FORIGEN_KEY (user_id) REFERENCES Users.user_id,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES Users (user_id)
 );
 
 CREATE TABLE Address(
     address_id INT NOT NULL AUTO_INCREMENT,
-    street_level VARCHAR NOT NULL,
-    city_name VARCHAR NOT NULL,
-    state VARCHAR NOT NULL,
-    zip_code VARCHAR NOT NULL,
-    PRIMARY KEY ( address_id ),
+    street_level VARCHAR(40) NOT NULL,
+    city_name VARCHAR(20) NOT NULL,
+    state VARCHAR(20) NOT NULL,
+    zip_code VARCHAR(10) NOT NULL,
+    PRIMARY KEY ( address_id )
 )
 
 CREATE TABLE Pictures(
     pictures_id INT NOT NULL AUTO_INCREMENT,
-    image_url VARCHAR NOT NULL,
+    image_url VARCHAR(30) NOT NULL,
     tenant_id INT NOT NULL,
     PRIMARY KEY ( pictures_id ),
-    FORIGEN_KEY (tenant_id) REFERENCES Users.user_id
+    FOREIGN KEY (tenant_id) REFERENCES Users(user_id)
 )
 
 CREATE TABLE Searches(
     search_id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
-    keywords VARCHAR NOT NULL, //needs to be an array
-    cityname VARCHAR NOT NULL,
-    zip_code VARCHAR NOT NULL,
-    property_type VARCHAR NOT NULL,
+    keywords VARCHAR(20) NOT NULL,
+    cityname VARCHAR(20) NOT NULL,
+    zip_code VARCHAR(20) NOT NULL,
+    property_type VARCHAR(20) NOT NULL,
     max_rental_price INT NOT NULL,
     min_rental_price INT NOT NULL,
-    notification_freq ENUM("realtime", "daily", “weekly”) NOT NULL,
+    notification_freq ENUM('realtime', 'daily', 'weekly'),
     PRIMARY KEY (search_id),
-    FORIGEN_KEY (user_id) REFERENCES Users.user_id
+    FOREIGN KEY (user_id) REFERENCES Users (user_id)
 )
 
 
@@ -67,6 +68,7 @@ CREATE TABLE Favourites(
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     place_id INT NOT NULL,
-    FOREIGN_KEY (user_id) REFERENCES Users.user_id,
-    FOREIGN_KEY (place_id) REFERENCES Place.place_id
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (place_id) REFERENCES Place(place_id)
 );
