@@ -34,9 +34,8 @@ var routes = function (connection) {
             zip_code: zip
         };
 
-
         var query = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
-        
+
             var query2 = connection.query('INSERT INTO Address SET ?', values, function (err2, results2) {
 
 

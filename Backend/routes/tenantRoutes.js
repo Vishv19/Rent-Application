@@ -13,28 +13,28 @@ var routes = function (connection) {
     tenantRouter.route('/search').post(function (req, res) {
 
         var keywords = req.body.keywords;
-        var city = req.body.city;
-        var zip = req.body.zip;
+        var city = req.body.location.city;
+        var zip = req.body.location.zip;
         var propertyType = req.body.propertyType;
         var minPrice = req.body.priceRange.min;
         var maxPrice = req.body.priceRange.max;
 
         var arrayOfValues = [];
-        arrayOfValues.push(city);
         arrayOfValues.push(zip);
         arrayOfValues.push(minPrice);
         arrayOfValues.push(maxPrice);
+        arrayOfValues.push('%'+city+'%');
 
         var resultObject = {"list": []};
 
-
-        var queryString = 'select * from Place,Address where Address.city_name = ? AND Address.zip_code = ? AND Place.price > ? AND Place.price < ?';
-
-        for (var keyword in keywords) {
-            queryString = queryString + ' OR Place.description LIKE \'?\'';
-            arrayOfValues.push(keyword);
+        var queryString = 'select * from Place,Address where Place.address_id = Address.address_id AND Address.zip_code = ? AND Place.price > ? AND Place.price < ? AND Address.city_name LIKE ?';
+        for (k in keywords) {
+            queryString = queryString + ' AND Place.description LIKE ?';
+            arrayOfValues.push('%' + keywords[k] + '%');
         }
-
+        
+        // console.log(arrayOfValues);
+        // console.log(queryString);
 
         var query = connection.query(queryString, arrayOfValues, function (err, results) {
 
@@ -42,30 +42,28 @@ var routes = function (connection) {
                 return res.json(err);
             } else {
 
-                for (var result in results) {
-
+                for (i in results) {
                     var resObject = {
                         "place": {
                             "address": {
-                                "street-level": result.street_level,
-                                "city-name": result.city_name,
-                                "state": result.state,
-                                "zip-code": result.zip_code
+                                "street-level": results[i].street_level,
+                                "city-name": results[i].city_name,
+                                "state": results[i].state,
+                                "zip-code": results[i].zip_code
                             },
-                            "name": result.place_name,
-                            "rooms": result.rooms_count,
-                            "bathrooms": result.bathrooms_count,
-                            "area": result.area_squnit,
-                            "price": result.price,
-                            "phone": result.phone_number,
-                            "email": result.email,
-                            "description": result.description
+                            "name": results[i].place_name,
+                            "rooms": results[i].rooms_count,
+                            "bathrooms": results[i].bathrooms_count,
+                            "area": results[i].area_squnit,
+                            "price": results[i].price,
+                            "phone": results[i].phone_number,
+                            "email": results[i].email,
+                            "description": results[i].description
                         }
                     }
                     resultObject.list.push(resObject);
                 }
-
-                return resultObject;
+                return res.json(resultObject.list);
             }
 
 
