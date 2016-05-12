@@ -63,7 +63,7 @@ var routes = function (connection) {
                     }
                     resultObject.list.push(resObject);
                 }
-                return res.json(resultObject.list);
+                return res.json(resultObject);
             }
 
 
@@ -118,7 +118,7 @@ var routes = function (connection) {
     tenantRouter.route('/favouritePlace/:placeId').post(function (req, res) {
 
         //get token from header, hardcoded here
-        var token = 1;
+        var token = req.get('token');
         var placeId = req.params.placeId;
 
 
