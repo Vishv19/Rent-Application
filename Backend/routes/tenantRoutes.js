@@ -58,7 +58,8 @@ var routes = function (connection) {
                             "price": results[i].price,
                             "phone": results[i].phone_number,
                             "email": results[i].email,
-                            "description": results[i].description
+                            "description": results[i].description,
+                            "place_id": results[i].place_id
                         }
                     }
                     resultObject.list.push(resObject);

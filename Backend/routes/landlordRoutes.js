@@ -271,7 +271,8 @@ var routes = function (connection) {
                                                     "price": results3[0].price,
                                                     "phone": results3[0].phone_number,
                                                     "email": results3[0].email,
-                                                    "description": results3[0].description
+                                                    "description": results3[0].description,
+                                                    "place_id": results3[0].place_id
                                                 }
                                             }
 
