@@ -3,6 +3,7 @@
  */
 
 var express = require('express');
+var async = require('async');
 
 
 var routes = function (connection) {
@@ -120,22 +121,116 @@ var routes = function (connection) {
 
         //get token from header, hardcoded here
         var token = req.get('token');
-        var placeId = req.params.placeId;
+        var placeId = req.params.placeId;   
 
 
         var query = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
+
+            if (err) {
+                console.log(err);
+                return res.json(err);
+            } else {
+                var userId = results[0].user_id;
+                console.log(results);
+                console.log(results[0].user_id);
+                var values = {
+                    user_id: userId,
+                    place_id: placeId,
+                };
+
+                var query = connection.query("insert into Favourites SET ?", values, function (err2, results2) {
+
+                    if (err2) {
+                        console.log(err2);
+                        return res.json(err2);
+                    } else {
+                        return res.json({"result": "true"});
+                    }
+                });
+            }
+        });
+    });
+
+    tenantRouter.route('/getAllfavouritePlace').get(function (req, res) {
+
+        //get token from header, hardcoded here
+        var token = req.get('token');
+        var placeId = req.params.placeId;
+
+
+        var query1 = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
 
             if (err) {
                 return res.json(err);
             } else {
                 var userId = results[0].user_id;
 
-                var query = connection.query("insert into Favourites SET ?", [userId, placeId], function (err2, results2) {
+                var resultObject = {"list": []};
+                var query2 = connection.query("select place_id from Favourites where user_id = ?", [userId], function (err2, results2) {
 
                     if (err2) {
                         return res.json(err);
                     } else {
-                        return res.json({"result": "true"});
+                        //loop through all the results
+                        async.forEachOfSeries(results2, function(placeId, key, next) {
+                            // console.log(placeId.place_id);
+
+                            var query3 = connection.query('select * from Place where place_id = ?', [placeId.place_id], function (err3, results3) {
+
+                                if (err3) {
+                                    return res.json(err3);
+                                } else {
+
+                                    // console.log(results3);
+                                    var addressid = results3[0].address_id;
+                                    // console.log(addressid);
+
+                                    var query4 = connection.query('select * from Address where address_id = ?', [addressid], function (err4, results4) {
+
+                                        if (err4) {
+                                            return res.json(err4);
+                                        } else {
+
+                                            var resObject = {
+                                                "place": {
+                                                    "address": {
+                                                        "street-level": results4[0].street_level,
+                                                        "city-name": results4[0].city_name,
+                                                        "state": results4[0].state,
+                                                        "zip-code": results4[0].zip_code
+                                                    },
+                                                    "name": results3[0].place_name,
+                                                    "rooms": results3[0].rooms_count,
+                                                    "bathrooms": results3[0].bathrooms_count,
+                                                    "area": results3[0].area_squnit,
+                                                    "price": results3[0].price,
+                                                    "phone": results3[0].phone_number,
+                                                    "email": results3[0].email,
+                                                    "description": results3[0].description,
+                                                    "place_id": results3[0].place_id
+                                                }
+                                            }
+
+                                            //add the json object to list
+                                            console.log(resObject);
+                                            resultObject.list.push(resObject);
+                                            next();
+                                            // console.log(resultObject.list);
+                                        }
+                                    });
+                                }
+                            });
+
+                        }, function(looperr){
+                                // if any of the loop processing produced an error, err would equal that error
+                                if( looperr ) {
+                                    // One of the iterations produced an error.
+                                    return res.json(looperr);
+                                } else {
+                                    console.log("everything is processed");
+                                    return res.json(resultObject);
+                                }
+                        });
                     }
                 });
             }

@@ -283,11 +283,9 @@ var routes = function (connection) {
                                             // console.log(resultObject.list);
                                         }
                                     });
-                                
                                 }
                             });
 
-                        
                         }, function(looperr){
                                 // if any of the loop processing produced an error, err would equal that error
                                 if( looperr ) {
