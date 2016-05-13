@@ -4,6 +4,23 @@
 
 var express = require('express');
 var async = require('async');
+var nodemailer =require('./sendmail.js')
+
+function mailDetails(body, userName) {
+
+  var recipient = body.recipient;
+  var subject = body.subject;
+  var message = body.message;
+
+  var mailOptions = {
+    from: userName + ' via <' + 'rentz.application@gmail.com' + '>',
+    to: recipient,
+    subject: subject,
+    text: message,
+
+  };
+  return mailOptions;
+}
 
 var routes = function (connection) {
 
@@ -34,7 +51,7 @@ var routes = function (connection) {
             zip_code: zip
         };
 
-        var query = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
+        var query = connection.query("select * from Users where token = ?", [token], function (err, results) {
 
             var query2 = connection.query('INSERT INTO Address SET ?', values, function (err2, results2) {
 
@@ -86,7 +103,17 @@ var routes = function (connection) {
                                     return res.json(err4);
                                 }
                                 else {
-                                    return res.json({"result": "true"});
+                                    var mailbody = {
+                                        // recipient: "vishvbrahmbhatt19@gmail.com",
+                                        recipient: results[0].email_id,
+                                        subject: "New posting done from your account",
+                                        message:"Hi, A new Posting has been created from your account. We will keep you updated on it."
+                                    }
+                                    var mailOptions = mailDetails(mailbody, results[0].user_name);
+                                    nodemailer.sendmail(mailOptions, function(err5, sendMailResponse) {
+                                        if(err5) return res.json(err5);
+                                        return res.json({"result": "true"});
+                                    });
                                 }
                             });
                         }
@@ -115,25 +142,34 @@ var routes = function (connection) {
                         return res.json(err);
                     } else {
 
-                        var resObject = {
-                            "place": {
-                                "address": {
-                                    "street-level": results2[0].street_level,
-                                    "city-name": results2[0].city_name,
-                                    "state": results2[0].state,
-                                    "zip-code": results2[0].zip_code
-                                },
-                                "name": results[0].place_name,
-                                "rooms": results[0].rooms_count,
-                                "bathrooms": results[0].bathrooms_count,
-                                "area": results[0].area_squnit,
-                                "price": results[0].price,
-                                "phone": results[0].phone_number,
-                                "email": results[0].email,
-                                "description": results[0].description
+                        var visits_count = results[0].page_visits_count + 1;
+                        var query3 = connection.query('update Place SET page_visits_count = ? where place_id = ?', [visits_count, placeId], function (err3, results3) {
+                            if(err3) return res.json(err3);
+                            else {
+                                var resObject = {
+                                    "place": {
+                                        "address": {
+                                            "street-level": results2[0].street_level,
+                                            "city-name": results2[0].city_name,
+                                            "state": results2[0].state,
+                                            "zip-code": results2[0].zip_code
+                                        },
+                                        "name": results[0].place_name,
+                                        "rooms": results[0].rooms_count,
+                                        "bathrooms": results[0].bathrooms_count,
+                                        "area": results[0].area_squnit,
+                                        "price": results[0].price,
+                                        "phone": results[0].phone_number,
+                                        "email": results[0].email,
+                                        "page_visits_count":visits_count,
+                                        "description": results[0].description,
+                                        "place_id": results[0].place_id
+                                    }
+                                }
+                                return res.json(resObject);
                             }
-                        }
-                        return res.json(resObject);
+                        });
+
                     }
                 });
             }
