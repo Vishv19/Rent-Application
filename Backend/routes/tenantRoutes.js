@@ -41,11 +41,11 @@ var routes = function (connection) {
             arrayOfValues.push(zip);
         }
         if(minPrice!== "") {
-            filterQuery += " AND Place.price > ?";
+            filterQuery += " AND Place.price >= ?";
             arrayOfValues.push(minPrice);
         }
         if(maxPrice!== "") {
-            filterQuery += " AND Place.price < ?"
+            filterQuery += " AND Place.price <= ?"
             arrayOfValues.push(maxPrice);
         }
         if(propertyType!== "") {
@@ -158,13 +158,58 @@ var routes = function (connection) {
                     place_id: placeId,
                 };
 
-                var query = connection.query("insert into Favourites SET ?", values, function (err2, results2) {
+                var query2 = connection.query("select * from Favourites where place_id = ?", [placeId], function (err2, results2) {
+                    if(results2.length === 0) {
+                        var query3 = connection.query("insert into Favourites SET ?", values, function (err3, results3) {
 
-                    if (err2) {
-                        console.log(err2);
-                        return res.json(err2);
-                    } else {
-                        return res.json({"result": "true"});
+                            if (err3) {
+                                console.log(err3);
+                                return res.json(err3);
+                            } else {
+                                return res.json({"result": "true"});
+                            }
+                        });                        
+                    }
+                    else {
+                        return res.json({"result":"Already added"});
+                    }
+                });
+            }
+        });
+    });
+
+    tenantRouter.route('/favouritePlace/:placeId').delete(function (req, res) {
+
+        //get token from header, hardcoded here
+        var token = req.get('token');
+        var placeId = req.params.placeId;   
+
+
+        var query = connection.query("select user_id from Users where email_id = ?", [token], function (err, results) {
+
+            if (err) {
+                console.log(err);
+                return res.json(err);
+            } else {
+                var userId = results[0].user_id;
+                console.log(results);
+                console.log(results[0].user_id);
+                var values = [placeId]
+
+                var query2 = connection.query("select * from Favourites where place_id = ?", [placeId], function (err2, results2) { 
+                    if(results2.length!==0) {
+                        var query3 = connection.query("delete from Favourites where place_id = ?", values, function (err3, results3) {
+
+                            if (err3) {
+                                console.log(err3);
+                                return res.json(err3);
+                            } else {
+                                return res.json({"result": "true"});
+                            }
+                        });                        
+                    }
+                    else {
+                        return res.json({"result": "No such place to delete"});
                     }
                 });
             }
