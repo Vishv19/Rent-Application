@@ -144,7 +144,7 @@ var routes = function (connection) {
         var placeId = req.params.placeId;   
 
 
-        var query = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
+        var query = connection.query("select user_id from Users where email_id = ?", [token], function (err, results) {
 
             if (err) {
                 console.log(err);
@@ -178,7 +178,7 @@ var routes = function (connection) {
         var placeId = req.params.placeId;
 
 
-        var query1 = connection.query("select user_id from Users where token = ?", [token], function (err, results) {
+        var query1 = connection.query("select user_id from Users where email_id = ?", [token], function (err, results) {
 
             if (err) {
                 return res.json(err);

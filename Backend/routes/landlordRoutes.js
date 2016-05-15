@@ -61,7 +61,7 @@ var routes = function (connection) {
             zip_code: zip
         };
 
-        var query = connection.query("select * from Users where token = ?", [token], function (err, results) {
+        var query = connection.query("select * from Users where email_id = ?", [token], function (err, results) {
 
             var query2 = connection.query('INSERT INTO Address SET ?', values, function (err2, results2) {
 
@@ -241,7 +241,7 @@ var routes = function (connection) {
         var imageurllist = req.body.place.imageurllist;
         var description = req.body.place.description;
 
-        var queryuser = connection.query("select * from Users where token = ?", [token], function (usrerr, userresults) {
+        var queryuser = connection.query("select * from Users where email_id = ?", [token], function (usrerr, userresults) {
             if(usrerr) return res.json(err);
             else {
                 var query = connection.query('select * from Place where place_id = ?', [placeId], function (err, results) {
@@ -356,7 +356,7 @@ var routes = function (connection) {
 
         var landlordToken = req.get('token');
 
-        var query = connection.query('select user_id from Users where token = ?', [landlordToken], function (err, results) {
+        var query = connection.query('select user_id from Users where email_id = ?', [landlordToken], function (err, results) {
 
             if (err) {
                 return res.json(err);
