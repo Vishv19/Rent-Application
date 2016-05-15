@@ -40,6 +40,8 @@ var routes = function (connection) {
         var price = req.body.place.price;
         var phone = req.body.place.phone;
         var email = req.body.place.email;
+        var propertytype = req.body.place.propertytype;
+        var imageurllist = req.body.place.imageurllist;
         var description = req.body.place.description;
         var token = req.get('token');
 
@@ -55,25 +57,14 @@ var routes = function (connection) {
 
             var query2 = connection.query('INSERT INTO Address SET ?', values, function (err2, results2) {
 
-
                 if (err2) {
                     return res.json(err2);
                 }
                 else {
 
-                    //console.log(results[0]);
-
-                    //get address if from results
-
                     var addressid = results2.insertId;
 
-
-                    //address created, now create a place
-                    // page_visits_count is 0 as place has just been added.
-                    //occupied = 0 for place not being occupied and will
-                    //change to 1 when occupied,I think it should be replaced by a boolean
-
-                    var values = {
+                    var placevalues = {
                         address_id: addressid,
                         place_name: name,
                         rooms_count: rooms,
@@ -84,32 +75,67 @@ var routes = function (connection) {
                         email: email,
                         description: description,
                         page_visits_count: 0,
-                        occupied: 0
+                        occupied: 0,
+                        property_type:propertytype
                     };
 
-
-                    var query3 = connection.query('INSERT INTO Place SET ?', values, function (err3, results3) {
+                    var query3 = connection.query('INSERT INTO Place SET ?', placevalues, function (err3, results3) {
+                        var placeId = results3.insertId;
                         if (err3) {
+                            console.log(err3);
                             return res.json(err3);
                         }
                         else {
                             //Update the userPlace table
                             userplacevalues = {
                                 user_id: results[0].user_id,
-                                place_id: results3.insertId
+                                place_id: placeId
                             };
                             var query4 = connection.query('INSERT INTO UserPlace SET ?', userplacevalues, function (err4, results4) {
+
                                 if (err4) {
                                     return res.json(err4);
                                 }
+
+                                //if imageurlist is not empty then check array and update entries in pictures
+                                if(imageurllist.length !== 0) {
+                                    async.forEachOfSeries(imageurllist, function(image, index, next) {
+
+                                        var picvalues = {
+                                            image_url: image,
+                                            place_id: placeId
+                                        }
+
+                                        var query5 = connection.query('INSERT INTO Pictures SET ?', picvalues, function (imgerr, results5) {
+                                            if(!imgerr) next();
+                                        });
+
+                                        }, function(looperr){
+                                            if( looperr ) {
+                                                // One of the iterations produced an error.
+                                                console.log(looperr);
+                                            } else {
+                                                var mailbody = {
+                                                    recipient: results[0].email_id,
+                                                    subject: "New posting done from your account",
+                                                    message:"Hi, A new Posting has been created from your account. We will keep you updated on it."
+                                                }
+                                                var mailOptions = mailDetails(mailbody, "Rentz");
+                                                nodemailer.sendmail(mailOptions, function(err5, sendMailResponse) {
+                                                    if(err5) return res.json(err5);
+                                                    return res.json({"result": "true"});
+                                                });
+                                            }
+                                    });
+                                }
+                                //if no image to upload then send an email at the end
                                 else {
                                     var mailbody = {
-                                        // recipient: "vishvbrahmbhatt19@gmail.com",
                                         recipient: results[0].email_id,
                                         subject: "New posting done from your account",
                                         message:"Hi, A new Posting has been created from your account. We will keep you updated on it."
                                     }
-                                    var mailOptions = mailDetails(mailbody, results[0].user_name);
+                                    var mailOptions = mailDetails(mailbody, "Rentz");
                                     nodemailer.sendmail(mailOptions, function(err5, sendMailResponse) {
                                         if(err5) return res.json(err5);
                                         return res.json({"result": "true"});
@@ -136,7 +162,7 @@ var routes = function (connection) {
             } else {
                 var addressid = results[0].address_id;
 
-                var query = connection.query('select * from Address where address_id = ?', [addressid], function (err2, results2) {
+                var query2 = connection.query('select * from Address where address_id = ?', [addressid], function (err2, results2) {
 
                     if (err2) {
                         return res.json(err);
@@ -146,30 +172,38 @@ var routes = function (connection) {
                         var query3 = connection.query('update Place SET page_visits_count = ? where place_id = ?', [visits_count, placeId], function (err3, results3) {
                             if(err3) return res.json(err3);
                             else {
-                                var resObject = {
-                                    "place": {
-                                        "address": {
-                                            "street-level": results2[0].street_level,
-                                            "city-name": results2[0].city_name,
-                                            "state": results2[0].state,
-                                            "zip-code": results2[0].zip_code
-                                        },
-                                        "name": results[0].place_name,
-                                        "rooms": results[0].rooms_count,
-                                        "bathrooms": results[0].bathrooms_count,
-                                        "area": results[0].area_squnit,
-                                        "price": results[0].price,
-                                        "phone": results[0].phone_number,
-                                        "email": results[0].email,
-                                        "page_visits_count":visits_count,
-                                        "description": results[0].description,
-                                        "place_id": results[0].place_id
+                                var query4 = connection.query('select * from Pictures where place_id = ?', [placeId], function (err4, results4) {
+                                    if(err4) {
+                                        return res.json(err4);
                                     }
-                                }
-                                return res.json(resObject);
+                                    else {
+                                        var resObject = {
+                                            "place": {
+                                                "address": {
+                                                    "street-level": results2[0].street_level,
+                                                    "city-name": results2[0].city_name,
+                                                    "state": results2[0].state,
+                                                    "zip-code": results2[0].zip_code
+                                                },
+                                                "name": results[0].place_name,
+                                                "rooms": results[0].rooms_count,
+                                                "bathrooms": results[0].bathrooms_count,
+                                                "area": results[0].area_squnit,
+                                                "price": results[0].price,
+                                                "phone": results[0].phone_number,
+                                                "email": results[0].email,
+                                                "page_visits_count":visits_count,
+                                                "description": results[0].description,
+                                                "propertytype": results[0].property_type,
+                                                "place_id": results[0].place_id,
+                                                "imageurllist":results4
+                                            }
+                                        }
+                                        return res.json(resObject);
+                                    }
+                                });
                             }
                         });
-
                     }
                 });
             }
@@ -180,6 +214,7 @@ var routes = function (connection) {
     landlordRouter.route('/updatePlace/:placeId').put(function (req, res) {
 
         var placeId = req.params.placeId;
+        var token = req.get('token');
 
         var street = req.body.place.address.street;
         var city = req.body.place.address.city;
@@ -193,40 +228,83 @@ var routes = function (connection) {
         var price = req.body.place.price;
         var phone = req.body.place.phone;
         var email = req.body.place.email;
+        var propertytype = req.body.place.propertytype;
+        var imageurllist = req.body.place.imageurllist;
         var description = req.body.place.description;
 
-        var query = connection.query('select * from Place where place_id = ?', [placeId], function (err, results) {
+        var queryuser = connection.query("select * from Users where token = ?", [token], function (usrerr, userresults) {
+            if(usrerr) return res.json(err);
+            else {
+                var query = connection.query('select * from Place where place_id = ?', [placeId], function (err, results) {
 
-            if (err) {
-                console.log("Err " + err);
-                return res.json(err);
-            } else {
-                var addressid = results[0].address_id;
-
-                var query = connection.query('update Address SET street_level = ? ,city_name = ?,state = ? ,zip_code = ? where address_id = ?', 
-                    [street, city, state, zip, addressid], function (err2, results2) {
-
-
-                    if (err2) {
-                        console.log("Err2 " + err2);
+                    if (err) {
+                        console.log("Err " + err);
                         return res.json(err);
                     } else {
+                        var addressid = results[0].address_id;
 
-                        var query = connection.query( 'update Place SET place_name = ?, rooms_count = ?, bathrooms_count = ? ,area_squnit = ? ,price = ?,phone_number = ?,email = ?,description = ? where place_id = ?'
-                        , [name, rooms, bathrooms, area, price, phone, email, description, placeId], function (err3, results3) {
+                        var query2 = connection.query('update Address SET street_level = ? ,city_name = ?,state = ? ,zip_code = ? where address_id = ?', 
+                            [street, city, state, zip, addressid], function (err2, results2) {
 
-
-                            if (err3) {
-                                console.log("Err3 " + err3);
+                            if (err2) {
+                                console.log("Err2 " + err2);
                                 return res.json(err);
                             } else {
-                                return res.json({"result": "true"});
+
+                                var query3 = connection.query( 'update Place SET place_name = ?, rooms_count = ?, bathrooms_count = ? ,area_squnit = ? ,price = ?,phone_number = ?,email = ?,description = ?, property_type =? where place_id = ?'
+                                , [name, rooms, bathrooms, area, price, phone, email, description,propertytype, placeId], function (err3, results3) {
+
+                                    if (err3) {
+                                        console.log("Err3 " + err3);
+                                        return res.json(err);
+                                    }
+                                    if(imageurllist.length !== 0) {
+                                        var query4 = connection.query('delete from Pictures where place_id = ?', [placeId], function (err4, results4) {
+                                            if(!err4) {
+                                                async.forEachOfSeries(imageurllist, function(image, index, next) {
+
+                                                var picvalues = {
+                                                    image_url: image,
+                                                    place_id: placeId
+                                                }
+
+                                                var query5 = connection.query('INSERT INTO Pictures SET ?', picvalues, function (imgerr, results5) {
+                                                    if(!imgerr) next();
+                                                });
+
+                                                }, function(looperr){
+                                                    if( looperr ) {
+                                                        // One of the iterations produced an error.
+                                                        console.log(looperr);
+                                                    } else {
+                                                        var mailbody = {
+                                                            recipient: userresults[0].email_id,
+                                                            subject: "Posting has been updated from your account",
+                                                            message:"Hi, A Posting has been changed from your account. We will keep you updated on it."
+                                                        }
+                                                        var mailOptions = mailDetails(mailbody, "Rentz");
+                                                        nodemailer.sendmail(mailOptions, function(err5, sendMailResponse) {
+                                                            if(err5) return res.json(err5);
+                                                            return res.json({"result": "true"});
+                                                        });
+                                                        // return res.json({"result": "true"});
+                                                    }
+                                            });
+                                            }
+                                        });
+                                    }
+                                    else {
+                                        return res.json({"result": "true"});
+                                    }
+                                });
                             }
                         });
                     }
-                });
+                });                
             }
+
         });
+
     });
 
     landlordRouter.route('/deletePlace/:placeId').delete(function (req, res) {
@@ -247,10 +325,26 @@ var routes = function (connection) {
         });
     });
 
+    landlordRouter.route('/uploadImage/:place_id').post(function (req, res) {
+        var imageurl = req.body.imageurl;
+        var placeid = req.params.place_id;
+
+        var values = {
+            image_url: imageurl,
+            place_id: placeid
+        }
+
+        var query = connection.query('INSERT INTO Pictures SET ?', values, function (err, results) {
+            if(err) {
+                console.log(err);
+                return res.json(err);
+            }
+            return res.json({upload:"true"});
+        });
+    });
+
     landlordRouter.route('/getPlaceList/').get(function (req, res) {
         //the request will return all places associated with a particular landlord
-
-        //Here I have hardcoded the landlordToken, but it should be retrieved from header
 
         var landlordToken = req.get('token');
 
@@ -267,7 +361,7 @@ var routes = function (connection) {
                 var resultObject = {"list": []};
 
 
-                var query = connection.query('select place_id from UserPlace where user_id = ?', [userId], function (err2, results2) {
+                var query2 = connection.query('select place_id from UserPlace where user_id = ?', [userId], function (err2, results2) {
 
                     if (err2) {
                         return res.json(err2);
@@ -276,7 +370,7 @@ var routes = function (connection) {
                         async.forEachOfSeries(results2, function(placeId, key, next) {
                             // console.log(placeId.place_id);
 
-                            var query = connection.query('select * from Place where place_id = ?', [placeId.place_id], function (err3, results3) {
+                            var query3 = connection.query('select * from Place where place_id = ?', [placeId.place_id], function (err3, results3) {
 
                                 if (err3) {
                                     return res.json(err3);
@@ -286,38 +380,41 @@ var routes = function (connection) {
                                     var addressid = results3[0].address_id;
                                     // console.log(addressid);
 
-                                    var query = connection.query('select * from Address where address_id = ?', [addressid], function (err4, results4) {
+                                    var query4 = connection.query('select * from Address where address_id = ?', [addressid], function (err4, results4) {
 
-                                        if (err4) {
-                                            return res.json(err4);
-                                        } else {
+                                        var query5 = connection.query('select * from Pictures where place_id = ?', [placeId.place_id], function (err5, results5) {
+                                            if (err4) {
+                                                return res.json(err4);
+                                            } else {
 
-                                            var resObject = {
-                                                "place": {
-                                                    "address": {
-                                                        "street-level": results4[0].street_level,
-                                                        "city-name": results4[0].city_name,
-                                                        "state": results4[0].state,
-                                                        "zip-code": results4[0].zip_code
-                                                    },
-                                                    "name": results3[0].place_name,
-                                                    "rooms": results3[0].rooms_count,
-                                                    "bathrooms": results3[0].bathrooms_count,
-                                                    "area": results3[0].area_squnit,
-                                                    "price": results3[0].price,
-                                                    "phone": results3[0].phone_number,
-                                                    "email": results3[0].email,
-                                                    "description": results3[0].description,
-                                                    "place_id": results3[0].place_id
+                                                var resObject = {
+                                                    "place": {
+                                                        "address": {
+                                                            "street-level": results4[0].street_level,
+                                                            "city-name": results4[0].city_name,
+                                                            "state": results4[0].state,
+                                                            "zip-code": results4[0].zip_code
+                                                        },
+                                                        "name": results3[0].place_name,
+                                                        "rooms": results3[0].rooms_count,
+                                                        "bathrooms": results3[0].bathrooms_count,
+                                                        "area": results3[0].area_squnit,
+                                                        "price": results3[0].price,
+                                                        "phone": results3[0].phone_number,
+                                                        "email": results3[0].email,
+                                                        "description": results3[0].description,
+                                                        "place_id": results3[0].place_id,
+                                                        "imageurllist": results5
+                                                    }
                                                 }
-                                            }
 
-                                            //add the json object to list
-                                            console.log(resObject);
-                                            resultObject.list.push(resObject);
-                                            next();
-                                            // console.log(resultObject.list);
-                                        }
+                                                //add the json object to list
+                                                console.log(resObject);
+                                                resultObject.list.push(resObject);
+                                                next();
+                                                // console.log(resultObject.list);
+                                            }
+                                        });
                                     });
                                 }
                             });
