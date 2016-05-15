@@ -5,6 +5,13 @@
 var express = require('express');
 var async = require('async');
 
+function returnImageUrls(jsonImageList) {
+    var urlList = [];
+    for(var i = 0; i < jsonImageList.length; i++) {
+        urlList.push(jsonImageList[i].image_url);
+    }
+    return urlList;
+}
 
 var routes = function (connection) {
 
@@ -21,21 +28,38 @@ var routes = function (connection) {
         var maxPrice = req.body.priceRange.max;
 
         var arrayOfValues = [];
-        arrayOfValues.push(zip);
-        arrayOfValues.push(minPrice);
-        arrayOfValues.push(maxPrice);
         arrayOfValues.push('%'+city+'%');
+
+        var filterQuery = "";
 
         var resultObject = {"list": []};
 
-        var queryString = 'select * from Place,Address where Place.address_id = Address.address_id AND Address.zip_code = ? AND Place.price > ? AND Place.price < ? AND Address.city_name LIKE ?';
-        for (k in keywords) {
-            queryString = queryString + ' AND Place.description LIKE ?';
-            arrayOfValues.push('%' + keywords[k] + '%');
+        var queryString = 'select * from Place,Address where Place.address_id = Address.address_id AND Address.city_name LIKE ?';
+
+        if(zip!== "") {
+            filterQuery += " AND Address.zip_code = ?";
+            arrayOfValues.push(zip);
         }
-        
-        // console.log(arrayOfValues);
-        // console.log(queryString);
+        if(minPrice!== "") {
+            filterQuery += " AND Place.price > ?";
+            arrayOfValues.push(minPrice);
+        }
+        if(maxPrice!== "") {
+            filterQuery += " AND Place.price < ?"
+            arrayOfValues.push(maxPrice);
+        }
+        if(propertyType!== "") {
+            filterQuery += " AND Place.property_type LIKE ?"
+            arrayOfValues.push('%'+propertyType+'%');
+        }
+        queryString += filterQuery;
+
+        for (k in keywords) {
+            if(keywords[k] !== "") {
+                queryString = queryString + ' AND Place.description LIKE ?';
+                arrayOfValues.push('%' + keywords[k] + '%');                
+            }
+        }
 
         var query = connection.query(queryString, arrayOfValues, function (err, results) {
 
@@ -67,11 +91,7 @@ var routes = function (connection) {
                 }
                 return res.json(resultObject);
             }
-
-
         });
-
-
     });
 
     tenantRouter.route('/getPlace/:placeId').get(function (req, res) {
@@ -186,37 +206,45 @@ var routes = function (connection) {
                                     // console.log(addressid);
 
                                     var query4 = connection.query('select * from Address where address_id = ?', [addressid], function (err4, results4) {
-
                                         if (err4) {
                                             return res.json(err4);
-                                        } else {
-
-                                            var resObject = {
-                                                "place": {
-                                                    "address": {
-                                                        "street-level": results4[0].street_level,
-                                                        "city-name": results4[0].city_name,
-                                                        "state": results4[0].state,
-                                                        "zip-code": results4[0].zip_code
-                                                    },
-                                                    "name": results3[0].place_name,
-                                                    "rooms": results3[0].rooms_count,
-                                                    "bathrooms": results3[0].bathrooms_count,
-                                                    "area": results3[0].area_squnit,
-                                                    "price": results3[0].price,
-                                                    "phone": results3[0].phone_number,
-                                                    "email": results3[0].email,
-                                                    "description": results3[0].description,
-                                                    "place_id": results3[0].place_id
-                                                }
-                                            }
-
-                                            //add the json object to list
-                                            console.log(resObject);
-                                            resultObject.list.push(resObject);
-                                            next();
-                                            // console.log(resultObject.list);
                                         }
+                                        var query5 = connection.query('select * from Pictures where place_id = ?', [placeId.place_id], function (err5, results5) {
+                                            if(err5) {
+                                                return res.json(err5);
+                                            }                                         
+                                            else {
+                                                var imageurls = returnImageUrls(results5);
+                                                var resObject = {
+                                                    "place": {
+                                                        "address": {
+                                                            "street-level": results4[0].street_level,
+                                                            "city-name": results4[0].city_name,
+                                                            "state": results4[0].state,
+                                                            "zip-code": results4[0].zip_code
+                                                        },
+                                                        "name": results3[0].place_name,
+                                                        "rooms": results3[0].rooms_count,
+                                                        "bathrooms": results3[0].bathrooms_count,
+                                                        "area": results3[0].area_squnit,
+                                                        "price": results3[0].price,
+                                                        "phone": results3[0].phone_number,
+                                                        "email": results3[0].email,
+                                                        "description": results3[0].description,
+                                                        "propertytype": results3[0].property_type,
+                                                        "place_id": results3[0].place_id,
+                                                        "imageurllist":imageurls
+                                                    }
+                                                }
+
+                                                //add the json object to list
+                                                console.log(resObject);
+                                                resultObject.list.push(resObject);
+                                                next();
+                                                // console.log(resultObject.list);
+                                            }
+                                        });
+
                                     });
                                 }
                             });

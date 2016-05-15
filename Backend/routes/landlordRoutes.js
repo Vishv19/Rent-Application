@@ -22,6 +22,14 @@ function mailDetails(body, userName) {
   return mailOptions;
 }
 
+function returnImageUrls(jsonImageList) {
+    var urlList = [];
+    for(var i = 0; i < jsonImageList.length; i++) {
+        urlList.push(jsonImageList[i].image_url);
+    }
+    return urlList;
+}
+
 var routes = function (connection) {
 
     var landlordRouter = express.Router();
@@ -177,6 +185,7 @@ var routes = function (connection) {
                                         return res.json(err4);
                                     }
                                     else {
+                                        var imageurls = returnImageUrls(results4);
                                         var resObject = {
                                             "place": {
                                                 "address": {
@@ -196,7 +205,7 @@ var routes = function (connection) {
                                                 "description": results[0].description,
                                                 "propertytype": results[0].property_type,
                                                 "place_id": results[0].place_id,
-                                                "imageurllist":results4
+                                                "imageurllist":imageurls
                                             }
                                         }
                                         return res.json(resObject);
@@ -287,7 +296,6 @@ var routes = function (connection) {
                                                             if(err5) return res.json(err5);
                                                             return res.json({"result": "true"});
                                                         });
-                                                        // return res.json({"result": "true"});
                                                     }
                                             });
                                             }
@@ -386,7 +394,7 @@ var routes = function (connection) {
                                             if (err4) {
                                                 return res.json(err4);
                                             } else {
-
+                                                var imageurls = returnImageUrls(results5);
                                                 var resObject = {
                                                     "place": {
                                                         "address": {
@@ -404,7 +412,7 @@ var routes = function (connection) {
                                                         "email": results3[0].email,
                                                         "description": results3[0].description,
                                                         "place_id": results3[0].place_id,
-                                                        "imageurllist": results5
+                                                        "imageurllist": imageurls
                                                     }
                                                 }
 
