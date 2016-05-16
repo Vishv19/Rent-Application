@@ -158,7 +158,7 @@ var routes = function (connection) {
                     place_id: placeId,
                 };
 
-                var query2 = connection.query("select * from Favourites where place_id = ?", [placeId], function (err2, results2) {
+                var query2 = connection.query("select * from Favourites where place_id = ? AND user_id = ?", [placeId, userId], function (err2, results2) {
                     if(results2.length === 0) {
                         var query3 = connection.query("insert into Favourites SET ?", values, function (err3, results3) {
 
@@ -196,7 +196,7 @@ var routes = function (connection) {
                 console.log(results[0].user_id);
                 var values = [placeId]
 
-                var query2 = connection.query("select * from Favourites where place_id = ?", [placeId], function (err2, results2) { 
+                var query2 = connection.query("select * from Favourites where place_id = ? AND user_id = ?", [placeId, userId], function (err2, results2) { 
                     if(results2.length!==0) {
                         var query3 = connection.query("delete from Favourites where place_id = ?", values, function (err3, results3) {
 
