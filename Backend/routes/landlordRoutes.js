@@ -62,7 +62,7 @@ var routes = function (connection) {
         };
 
         var query = connection.query("select * from Users where email_id = ?", [token], function (err, results) {
-
+            if(err) return res.json(err);
             var query2 = connection.query('INSERT INTO Address SET ?', values, function (err2, results2) {
 
                 if (err2) {
@@ -322,14 +322,60 @@ var routes = function (connection) {
         // 2. Place has been cancelled or removed
 
         var placeId = req.params.placeId;
+        var token = req.get('token');
 
-        var query = connection.query('delete from Place where place_id = ?', [placeId], function (err, results) {
-
-            if (err) {
-                return res.json(err);
-            } else {
-                return res.json({"result": "true"});
-            }
+        var query = connection.query('select user_id from Users where email_id = ?', [token], function (err, results) {
+            if(err) return res.json(err);
+            var userId = results[0].user_id;
+            var query2 = connection.query('select * from UserPlace where place_id = ? AND user_id = ?', [placeId, userId], function (err2, results2) {
+                console.log(userId);
+                console.log(placeId);
+                console.log(results2.length);
+                if(results2.length !== 0) {
+                    var query3 = connection.query('delete from UserPlace where place_id = ? AND user_id = ?', [placeId, userId], function (err3, results3) {
+                        if(err3) {
+                            conlog.log("err3");
+                            return res.json(err3);
+                        }
+                        else {
+                            var query4 = connection.query('delete from Favourites where place_id = ?', [placeId], function (err4, results4) {
+                                if(err4) return res.json(err4);
+                                var query5 = connection.query('select * from Pictures where place_id = ?', [placeId], function (err5, results5) { 
+                                    if(err5) return res.json(err5);
+                                    if(results5.length !==0) {
+                                        var query6 = connection.query('delete from Pictures where place_id = ?', [placeId], function (err6, results6) { 
+                                            if(err6) return res.json(err6);
+                                            var query7 = connection.query('delete from Place where place_id = ?', [placeId], function (err7, results7) {
+                                                if (err7) {
+                                                    console.log("err7");
+                                                    console.log(err7);
+                                                    return res.json(err7);
+                                                } else {
+                                                    return res.json({"result": "true"});
+                                                }
+                                            });
+                                        }); 
+                                    }
+                                    else {
+                                        var query7 = connection.query('delete from Place where place_id = ?', [placeId], function (err7, results7) {
+                                            if (err7) {
+                                                console.log("err7");
+                                                console.log(err7);
+                                                return res.json(err7);
+                                            } else {
+                                                return res.json({"result": "true"});
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    });
+                }
+                else {
+                    return res.json({"results": "No such place to delete"});
+                }
+            });
         });
     });
 
