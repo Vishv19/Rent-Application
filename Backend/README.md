@@ -7,9 +7,9 @@ About
 This repo is about backend architecture for rentz android application.
 The tech stack of backend includes:
 
-* MySQl
-* Nodejs
-* Express
+- MySQl
+- Nodejs
+- Express
 
 -----
 
