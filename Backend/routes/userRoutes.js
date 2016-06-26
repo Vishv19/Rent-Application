@@ -1,5 +1,5 @@
 /**
- * Created by shikher on 30-Apr-16.
+ * Created by vishv on 30-Apr-16.
  */
 
 var express = require('express');
@@ -42,8 +42,6 @@ var routes = function (connection) {
 
     userRouter.route('/login').post(function (req, res) {
         //login will take emailId and return result and json web token,
-        // for clarification see the file, which I shared.
-        // we should store the json web token in database.
 
         //get email
         var email = req.body.email;

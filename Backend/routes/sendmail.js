@@ -1,6 +1,6 @@
 var nodemailer = require('nodemailer');
 
-var transport = nodemailer.createTransport('smtps://rentz.application%40gmail.com:ZXC1234567890@smtp.gmail.com');
+var transport = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
 
 module.exports.sendmail = function(message, callback) {
   transport.sendMail(message, function(err, res) {
